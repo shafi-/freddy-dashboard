@@ -1,16 +1,23 @@
 import React, { useState } from 'react'
 import logo from '../logo.svg';
-import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
+import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
+import * as authApi from '../utils/api/auth';
+import authManger from '../utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
-
   const [username, setUsername] = useState('');
   const [usernameErrMsg, setUsernameErrMsg] = useState(null);
   const [password, setPassword] = useState('');
   const [passwordErrMsg, setPasswordErrMsg] = useState(null);
+  const [alertMsg, setAlertMsg] = useState(null);
 
-  function handleLoginFormSubmit(e) {
+  const navigate = useNavigate();
+
+  async function handleLoginFormSubmit(e) {
     e.preventDefault();
+
+    setAlertMsg(null);
 
     if (!username) {
       setUsernameErrMsg('Username is required');
@@ -25,7 +32,18 @@ function LoginPage() {
     } else {
       setPasswordErrMsg(null);
     }
-    console.log({ username, password });
+
+    const res = await authApi.login({ username, password });
+
+    if (res.ok) {
+      const { access_token, refresh_token } = res.data;
+      authManger.saveAuthToken(access_token);
+      authManger.saveRefreshToken(refresh_token);
+      navigate('/');
+    } else {
+      console.log(res.err);
+      setAlertMsg(res.err.message);
+    }
   }
 
   return (
@@ -69,6 +87,7 @@ function LoginPage() {
                     {passwordErrMsg}
                   </Form.Control.Feedback>
                 </Form.Group>
+                {alertMsg && <Alert variant='danger' className='mt-3'>{ alertMsg }</Alert>}
                 <Button variant='primary' type='submit' className='w-100 mt-5'>Login</Button>
               </Form>
             </Row>
