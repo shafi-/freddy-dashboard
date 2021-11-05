@@ -3,7 +3,8 @@ import { BASE_URL } from '../constants';
 import authManager from '../utils/auth';
 
 interface RequestOption {
-  credential: boolean
+  credential?: boolean
+  headers?: AxiosRequestHeaders
   [key: string]: any
 }
 
@@ -11,8 +12,27 @@ const DefaultRequestOption = { credential: true };
 
 
 export async function refreshToken() {
-  // todo refresh token and save new access-token on success
-  return;
+  try {
+    console.log('Trying to refresh');
+    const refreshToken = authManager.getRefreshToken().replaceAll('"', '');
+
+    await sendRequest('POST', '/refresh', null, {
+      headers: {
+        'Authorization': 'Bearer ' + refreshToken,
+      }
+    }).then(res => {
+      if (res.ok) {
+        const { access_token } = res.data;
+        authManager.saveAuthToken(access_token);
+      }
+    }).catch(err => {
+      console.error(err);
+    });
+
+    return;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function prepareHeaders(options: RequestOption = DefaultRequestOption) : { headers: AxiosRequestHeaders, needToRefresh: boolean } {
@@ -24,8 +44,10 @@ function prepareHeaders(options: RequestOption = DefaultRequestOption) : { heade
   if (options.credential) {
     const token = authManager.getAuthToken();
 
+    console.log({ token })
+
     if (token) {
-      headers.Authorization = 'Bearer ' + token;
+      headers.Authorization = 'Bearer ' + token.replaceAll('"', '');
       return { headers, needToRefresh: false };
     }
 
@@ -71,24 +93,34 @@ export async function sendRequest(
   options: RequestOption = DefaultRequestOption
 ): Promise<{ ok: boolean; data: any | null; err: null | Error; }> {
   try {
-    let { headers, needToRefresh } = prepareHeaders(options);
+    let headers = null;
 
-    if (needToRefresh) {
-      // TODO:: refresh token and try
-      await refreshToken();
+    if (options.headers) {
+      headers = options.headers;
+    } else {
       let preparedHeader = prepareHeaders(options);
 
       if (preparedHeader.needToRefresh) {
-        // TODO:: take to login
-        const err = new Error('Session expired. Need to login again');
-        return {
-          data: null,
-          err,
-          ok: false,
+        console.log('Refreshing token');
+        await refreshToken();
+        preparedHeader = prepareHeaders(options);
+
+        if (preparedHeader.needToRefresh) {
+          // TODO:: take to login
+          const err = new Error('Session expired. Need to login again');
+          window.location.href = '/login';
+
+          return {
+            data: null,
+            err,
+            ok: false,
+          }
         }
       }
+
       headers = preparedHeader.headers;
     }
+
     const res = await axios({
       method,
       data,
