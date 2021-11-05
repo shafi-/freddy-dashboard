@@ -92,6 +92,7 @@ export async function sendRequest(
     const res = await axios({
       method,
       data,
+      params: data,
       baseURL: BASE_URL,
       url,
       headers,
