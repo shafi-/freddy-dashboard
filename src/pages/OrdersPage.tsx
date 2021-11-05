@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
+import { Col, Form, InputGroup, Row, Spinner, Table } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom'
 import AppLayout from '../comps/layout/App';
 import TablePagination from '../comps/TablePagination';
@@ -54,6 +54,15 @@ function OrdersPage() {
     setPageNo(newPageNo);
   }
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+    </AppLayout>
+    )
+  }
   return (
     <AppLayout>
       <Row>
