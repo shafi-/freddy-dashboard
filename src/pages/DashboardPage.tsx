@@ -2,91 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, Col, Form, Row, Table } from 'react-bootstrap'
 import AppLayout from '../comps/layout/App'
 import * as DashboardApi from '../utils/api/dashboard';
-
-const data = {
-  "dashboard": {
-      "sales_over_time_week": {
-          "1": {
-              "orders": 96,
-              "total": 270240
-          },
-          "2": {
-              "orders": 31,
-              "total": 74121
-          },
-          "3": {
-              "orders": 52,
-              "total": 180284
-          },
-          "4": {
-              "orders": 34,
-              "total": 115600
-          },
-          "5": {
-              "orders": 67,
-              "total": 333325
-          },
-          "6": {
-              "orders": 57,
-              "total": 374262
-          },
-          "7": {
-              "orders": 26,
-              "total": 35672
-          }
-      },
-      "sales_over_time_year": {
-          "1": {
-              "orders": 330,
-              "total": 2952510
-          },
-          "10": {
-              "orders": 746,
-              "total": 2322298
-          },
-          "11": {
-              "orders": 5424,
-              "total": 16863216
-          },
-          "12": {
-              "orders": 680,
-              "total": 3198040
-          },
-          "2": {
-              "orders": 745,
-              "total": 7034290
-          },
-          "3": {
-              "orders": 687,
-              "total": 6486654
-          },
-          "4": {
-              "orders": 311,
-              "total": 1593253
-          },
-          "5": {
-              "orders": 44,
-              "total": 166452
-          },
-          "6": {
-              "orders": 403,
-              "total": 3514966
-          },
-          "7": {
-              "orders": 342,
-              "total": 1870398
-          },
-          "8": {
-              "orders": 696,
-              "total": 2628096
-          },
-          "9": {
-              "orders": 279,
-              "total": 1401138
-          }
-      }
-  }
-}
+import BarChart from 'react-bar-chart';
 
 interface SalesNode {
   total: number,
@@ -96,6 +12,8 @@ interface SalesNode {
 interface InfoCardProps extends SalesNode {
   header: string
 }
+
+type ChartType = 7 | 30;
 
 function InfoCard({ header, total, orders } : InfoCardProps) {
   return (
@@ -110,6 +28,7 @@ function DashboardPage() {
   const [bestSellers, setBestSellers] = useState([]);
   const [salesOfWeek, setSalesOfWeek] = useState(null);
   const [salesOfYear, setSalesOfYear] = useState(null);
+  const [chartType, setChartType] = useState<ChartType>(7);
 
   useEffect(() => {
     DashboardApi.getData().then(res => {
@@ -146,8 +65,32 @@ function DashboardPage() {
     }
   }
 
+  function getChartData() {
+    if (chartType === 7) {
+      if (salesOfWeek) {
+        return Object.entries(salesOfWeek).map((entry) => {
+          const [key, value] = entry;
+          // @ts-ignore
+          return { text: 'Day ' + key, value: value.total };
+        })
+      } else {
+        return [];
+      }
+    } else {
+      if (salesOfYear) {
+        return Object.entries(salesOfYear).map((entry) => {
+          const [key, value] = entry;
+          // @ts-ignore
+          return { text: 'Month ' + key, value: value.total };
+        })
+      } else {
+        return [];
+      }
+    }
+  }
+
   return (
-    <AppLayout>
+    <AppLayout ref='root-container'>
       <h3 className='pb-3'>Dashbaord</h3>
       <Row>
         <Col md='3'>
@@ -164,18 +107,26 @@ function DashboardPage() {
         <Col>
           <h3>Revenue</h3>
         </Col>
-        <Col>
+        <Col className='d-flex justify-content-around'>
           <Form>
             <Form.Check
               type="switch"
               id="day-range-switch"
-              label="Check this switch"
+              onClick={() => {
+                if (chartType === 7) setChartType(30);
+                else setChartType(7);
+              }}
             />
           </Form>
         </Col>
       </Row>
       <Row>
-
+        <BarChart ylabel='Revenue'
+          width={750}
+          height={500}
+          margin={{top: 20, right: 20, bottom: 30, left: 40}}
+          data={getChartData()}
+          onBarClick={console.log}/>
       </Row>
       <Row className='mt-4 pb-2'>
         <h3>Bestsellers</h3>
