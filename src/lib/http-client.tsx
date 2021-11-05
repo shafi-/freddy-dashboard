@@ -13,25 +13,22 @@ const DefaultRequestOption = { credential: true };
 
 export async function refreshToken() {
   try {
-    console.log('Trying to refresh');
     const refreshToken = authManager.getRefreshToken().replaceAll('"', '');
 
-    await sendRequest('POST', '/refresh', null, {
+    const res = await sendRequest('POST', '/refresh', null, {
       headers: {
         'Authorization': 'Bearer ' + refreshToken,
       }
-    }).then(res => {
-      if (res.ok) {
-        const { access_token } = res.data;
-        authManager.saveAuthToken(access_token);
-      }
-    }).catch(err => {
-      console.error(err);
     });
+
+    if (res.ok) {
+      const { access_token } = res.data;
+      authManager.saveAuthToken(access_token);
+    }
 
     return;
   } catch (err) {
-    console.error(err);
+    // console.error(err);
   }
 }
 
@@ -43,8 +40,6 @@ function prepareHeaders(options: RequestOption = DefaultRequestOption) : { heade
 
   if (options.credential) {
     const token = authManager.getAuthToken();
-
-    console.log({ token })
 
     if (token) {
       headers.Authorization = 'Bearer ' + token.replaceAll('"', '');
@@ -101,7 +96,6 @@ export async function sendRequest(
       let preparedHeader = prepareHeaders(options);
 
       if (preparedHeader.needToRefresh) {
-        console.log('Refreshing token');
         await refreshToken();
         preparedHeader = prepareHeaders(options);
 
