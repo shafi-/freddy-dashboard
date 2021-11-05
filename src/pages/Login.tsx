@@ -5,10 +5,26 @@ import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
 function LoginPage() {
 
   const [username, setUsername] = useState('');
+  const [usernameErrMsg, setUsernameErrMsg] = useState(null);
   const [password, setPassword] = useState('');
+  const [passwordErrMsg, setPasswordErrMsg] = useState(null);
 
   function handleLoginFormSubmit(e) {
     e.preventDefault();
+
+    if (!username) {
+      setUsernameErrMsg('Username is required');
+      return;
+    } else {
+      setUsernameErrMsg(null);
+    }
+
+    if (!password) {
+      setPasswordErrMsg('Password is required');
+      return;
+    } else {
+      setPasswordErrMsg(null);
+    }
     console.log({ username, password });
   }
 
@@ -33,7 +49,12 @@ function LoginPage() {
                     placeholder="Username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
+                    required
+                    isInvalid={!!usernameErrMsg}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {usernameErrMsg}
+                  </Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group>
                   <Form.Control
@@ -41,7 +62,12 @@ function LoginPage() {
                     placeholder="Password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
+                    required
+                    isInvalid={!!passwordErrMsg}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {passwordErrMsg}
+                  </Form.Control.Feedback>
                 </Form.Group>
                 <Button variant='primary' type='submit' className='w-100 mt-5'>Login</Button>
               </Form>
